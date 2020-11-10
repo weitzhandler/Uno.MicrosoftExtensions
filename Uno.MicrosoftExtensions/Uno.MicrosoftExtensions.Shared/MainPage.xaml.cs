@@ -24,7 +24,7 @@ namespace Uno.MicrosoftExtensions
     {
         public MainPage()
         {
-            this.InitializeComponent();
+            this.InitializeComponent();            
         }
     }
 }

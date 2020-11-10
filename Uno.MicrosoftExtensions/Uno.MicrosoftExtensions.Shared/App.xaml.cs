@@ -1,10 +1,15 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.EventLog;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Uno.Extensions;
 using Windows.ApplicationModel;
@@ -36,8 +41,8 @@ namespace Uno.MicrosoftExtensions
         /// </summary>
         public App()
         {
-
-            AppHost = Host
+            AppHost =
+                Host
                 .CreateDefaultBuilder()
                 .ConfigureLogging(ConfigureLogging)
                 .ConfigureServices(ConfigureServices)
@@ -47,12 +52,17 @@ namespace Uno.MicrosoftExtensions
 
             AppHost.Start();
 
-            this.InitializeComponent(); this.Suspending += OnSuspending;
+            this.InitializeComponent();
+            this.Suspending += OnSuspending;
         }
 
-        private void ConfigureLogging(ILoggingBuilder loggingBuilder)
+        private void ConfigureLogging(HostBuilderContext hostingContext, ILoggingBuilder loggingBuilder)
         {
-            loggingBuilder.ClearProviders();
+            loggingBuilder
+                .ClearProviders()
+                .AddConsole()
+                .AddDebug()
+                .AddEventSourceLogger();
 
             loggingBuilder
                 .AddFilter("Uno", LogLevel.Warning)
@@ -90,18 +100,14 @@ namespace Uno.MicrosoftExtensions
                 // .AddFilter("Windows.UI.Xaml.Controls.NativeListViewBaseAdapter", LogLevel.Debug) //Android
                 // .AddFilter("Windows.UI.Xaml.Controls.BufferViewCache", LogLevel.Debug) //Android
                 // .AddFilter("Windows.UI.Xaml.Controls.VirtualizingPanelGenerator", LogLevel.Debug) //WASM
-                .AddConsole()
-#if DEBUG
-                .AddDebug()
-                .SetMinimumLevel(LogLevel.Debug);
-#else
-				.SetMinimumLevel(LogLevel.Information);
-#endif
+                ;
         }
 
-        private void ConfigureServices(IServiceCollection services)
+        private void ConfigureServices(HostBuilderContext hostingContext, IServiceCollection services)
         {
+            var configuration = hostingContext.Configuration;
 
+            services.Configure<MyAppOptions>(configuration.GetSection(MyAppOptions.ConfigurationKey));
         }
 
         /// <summary>
@@ -141,10 +147,13 @@ namespace Uno.MicrosoftExtensions
             {
                 if (rootFrame.Content == null)
                 {
+                    var myAppOptions = Services.GetRequiredService<IOptions<MyAppOptions>>();
+                    var instance = myAppOptions.Value;
+
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                    rootFrame.Navigate(typeof(MainPage), e.Arguments);// myAppOptions);
                 }
                 // Ensure the current window is active
                 Windows.UI.Xaml.Window.Current.Activate();
