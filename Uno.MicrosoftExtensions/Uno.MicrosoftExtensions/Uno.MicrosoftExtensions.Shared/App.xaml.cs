@@ -113,6 +113,7 @@ namespace Uno.MicrosoftExtensions
         /// <param name="factory"></param>
         static void ConfigureFilters(ILoggerFactory factory)
         {
+/*
             factory
                 .WithFilter(new FilterLoggerSettings
                     {
@@ -158,6 +159,7 @@ namespace Uno.MicrosoftExtensions
 #else
                 .AddConsole(LogLevel.Information);
 #endif
+*/
         }
     }
 }
